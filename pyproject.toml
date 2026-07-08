@@ -1,0 +1,42 @@
+[project]
+name = "llmforge"
+version = "0.1.0"
+description = "Production-ready parameter-efficient fine-tuning (LoRA/QLoRA) framework for open-source LLMs"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "torch>=2.2",
+    "transformers>=4.42",
+    "peft>=0.11",
+    "trl>=0.9",
+    "bitsandbytes>=0.43; platform_system != 'Darwin'",
+    "accelerate>=0.31",
+    "datasets>=2.20",
+    "evaluate>=0.4",
+    "rouge-score>=0.1.2",
+    "scikit-learn>=1.5",
+    "wandb>=0.17",
+    "fastapi>=0.111",
+    "uvicorn[standard]>=0.30",
+    "pydantic>=2.7",
+    "pyyaml>=6.0",
+    "sentencepiece>=0.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.5",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

@@ -1,0 +1,4 @@
+name: mistralai/Mistral-7B-v0.3
+trust_remote_code: false
+torch_dtype: bfloat16
+max_seq_length: 8192

@@ -1,0 +1,474 @@
+<title>llmforge — Workflow &amp; Validation Report</title>
+<script>
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.documentElement.classList.add('reduced-motion');
+  }
+</script>
+<style>
+  :root {
+    --ink: #0e1a1f;
+    --ink-panel: #142329;
+    --ink-panel-2: #182a31;
+    --ink-border: rgba(157, 196, 200, 0.16);
+    --paper: #f2f5f4;
+    --paper-panel: #ffffff;
+    --paper-border: rgba(20, 45, 50, 0.12);
+
+    --bg: var(--ink);
+    --panel: var(--ink-panel);
+    --panel-2: var(--ink-panel-2);
+    --border: var(--ink-border);
+    --text: #e7efee;
+    --text-dim: #9db0b4;
+    --text-faint: #647579;
+
+    --accent: #e2963c;
+    --accent-soft: rgba(226, 150, 60, 0.16);
+    --ok: #4fa98a;
+    --ok-soft: rgba(79, 169, 138, 0.16);
+    --idle: #64777c;
+    --idle-soft: rgba(100, 119, 124, 0.14);
+
+    --font-mono: ui-monospace, 'JetBrains Mono', 'Fira Code', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    --font-serif: 'Iowan Old Style', 'Source Serif Pro', Georgia, 'Times New Roman', serif;
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: var(--paper);
+      --panel: var(--paper-panel);
+      --panel-2: #eef2f1;
+      --border: var(--paper-border);
+      --text: #12211f;
+      --text-dim: #47585a;
+      --text-faint: #7a8b8d;
+      --accent-soft: rgba(198, 122, 26, 0.12);
+      --ok-soft: rgba(43, 125, 98, 0.12);
+      --idle-soft: rgba(90, 105, 108, 0.1);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: var(--ink);
+    --panel: var(--ink-panel);
+    --panel-2: var(--ink-panel-2);
+    --border: var(--ink-border);
+    --text: #e7efee;
+    --text-dim: #9db0b4;
+    --text-faint: #647579;
+    --accent-soft: rgba(226, 150, 60, 0.16);
+    --ok-soft: rgba(79, 169, 138, 0.16);
+    --idle-soft: rgba(100, 119, 124, 0.14);
+  }
+  :root[data-theme="light"] {
+    --bg: var(--paper);
+    --panel: var(--paper-panel);
+    --panel-2: #eef2f1;
+    --border: var(--paper-border);
+    --text: #12211f;
+    --text-dim: #47585a;
+    --text-faint: #7a8b8d;
+    --accent-soft: rgba(198, 122, 26, 0.12);
+    --ok-soft: rgba(43, 125, 98, 0.12);
+    --idle-soft: rgba(90, 105, 108, 0.1);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-serif);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); }
+
+  .wrap {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 4rem 1.5rem 5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3.25rem;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 0.6em;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 0.5em;
+    height: 0.5em;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0.6em var(--accent);
+  }
+
+  h1 {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: clamp(1.7rem, 3.4vw, 2.5rem);
+    letter-spacing: -0.01em;
+    margin: 0.5rem 0 0;
+    text-wrap: balance;
+  }
+
+  .dek {
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+    color: var(--text-dim);
+    max-width: 62ch;
+    margin: 0.4rem 0 0;
+  }
+
+  .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.4rem;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--text-faint);
+    margin-top: 0.6rem;
+  }
+  .meta-row b { color: var(--text-dim); font-weight: 600; }
+
+  section h2 {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin: 0 0 1.1rem;
+    padding-bottom: 0.7rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ---------- pipeline diagram ---------- */
+  .pipeline-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.6rem 1.6rem 1.2rem;
+  }
+  .pipeline-svg { width: 100%; height: auto; display: block; }
+
+  .flow-line {
+    fill: none;
+    stroke: var(--border);
+    stroke-width: 2;
+  }
+  .flow-line-anim {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 2;
+    stroke-dasharray: 6 10;
+    opacity: 0.85;
+  }
+  .reduced-motion .pulse-group,
+  .reduced-motion .flow-line-anim { display: none; }
+
+  .node circle.ring {
+    fill: var(--panel);
+    stroke-width: 2.5;
+  }
+  .node.ok circle.ring { stroke: var(--ok); }
+  .node.partial circle.ring { stroke: var(--accent); }
+  .node.idle circle.ring { stroke: var(--idle); }
+
+  .node .glow {
+    opacity: 0;
+    transform-origin: center;
+    animation: breathe 3.2s ease-in-out infinite;
+  }
+  .node.ok .glow { fill: var(--ok); }
+  .node.partial .glow { fill: var(--accent); }
+  .node.idle .glow { fill: var(--idle); opacity: 0.25; animation: none; }
+  .node:nth-of-type(1) .glow { animation-delay: 0s; }
+  .node:nth-of-type(2) .glow { animation-delay: 0.4s; }
+  .node:nth-of-type(3) .glow { animation-delay: 0.8s; }
+  .node:nth-of-type(4) .glow { animation-delay: 1.2s; }
+  .node:nth-of-type(5) .glow { animation-delay: 1.6s; }
+  .node:nth-of-type(6) .glow { animation-delay: 2.0s; }
+  @keyframes breathe {
+    0%, 100% { opacity: 0; transform: scale(0.85); }
+    50% { opacity: 0.35; transform: scale(1.25); }
+  }
+  .reduced-motion .glow { animation: none !important; opacity: 0 !important; }
+
+  .node text.label {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    fill: var(--text);
+  }
+  .node text.sub {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    fill: var(--text-faint);
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.4rem;
+    margin-top: 1.1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-dim);
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 0.5em; }
+  .legend i { width: 0.65em; height: 0.65em; border-radius: 50%; display: inline-block; }
+  .legend i.ok { background: var(--ok); }
+  .legend i.partial { background: var(--accent); }
+  .legend i.idle { background: var(--idle); }
+
+  /* ---------- stat tiles ---------- */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .stat {
+    background: var(--panel);
+    padding: 1.3rem 1.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .stat .value {
+    font-family: var(--font-mono);
+    font-size: 1.7rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat .value.ok { color: var(--ok); }
+  .stat .value.accent { color: var(--accent); }
+  .stat .label {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .stat .note { font-size: 0.86rem; color: var(--text-dim); }
+
+  /* ---------- console log ---------- */
+  .console {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.3rem 1.4rem;
+    overflow-x: auto;
+  }
+  .console pre {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    line-height: 1.75;
+    white-space: pre;
+  }
+  .console .cmd { color: var(--accent); }
+  .console .pass { color: var(--ok); }
+  .console .dim { color: var(--text-faint); }
+  .console .sum { color: var(--text); font-weight: 600; }
+  .console .block + .block { margin-top: 1.1rem; padding-top: 1.1rem; border-top: 1px dashed var(--border); }
+
+  /* ---------- environment callout ---------- */
+  .callout {
+    background: var(--accent-soft);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 10px;
+    padding: 1.1rem 1.3rem;
+    font-size: 0.95rem;
+    color: var(--text-dim);
+  }
+  .callout b { color: var(--text); }
+  .callout code {
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.1em 0.4em;
+  }
+
+  footer {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--text-faint);
+    letter-spacing: 0.02em;
+    border-top: 1px solid var(--border);
+    padding-top: 1.2rem;
+  }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">llmforge // pipeline report</div>
+    <h1>Workflow &amp; Validation Report</h1>
+    <p class="dek">Six-stage LoRA/QLoRA fine-tuning pipeline, and what was actually run and confirmed working on 2026‑07‑07 — not a plan, a record of executed commands.</p>
+    <div class="meta-row">
+      <span><b>Repo</b> llmforge-production-finetuning</span>
+      <span><b>Interpreter</b> Python 3.12.7 (embeddable)</span>
+      <span><b>Run date</b> 2026-07-07</span>
+    </div>
+  </header>
+
+  <section aria-labelledby="pipeline-h">
+    <h2 id="pipeline-h">Pipeline</h2>
+    <div class="pipeline-panel">
+      <svg class="pipeline-svg" viewBox="0 0 1000 230" role="img" aria-label="Six-stage pipeline: data preparation, SFT training, evaluation, experiment tracking, inference optimization, deployment">
+        <path class="flow-line" d="M 70 115 C 220 40, 340 190, 500 115 S 780 40, 930 115" />
+        <path class="flow-line-anim" d="M 70 115 C 220 40, 340 190, 500 115 S 780 40, 930 115">
+          <animate attributeName="stroke-dashoffset" from="0" to="-320" dur="4.5s" repeatCount="indefinite" />
+        </path>
+
+        <g class="pulse-group">
+          <circle r="5" fill="var(--accent)">
+            <animateMotion dur="6s" repeatCount="indefinite"
+              path="M 70 115 C 220 40, 340 190, 500 115 S 780 40, 930 115" />
+          </circle>
+          <circle r="11" fill="var(--accent)" opacity="0.35">
+            <animateMotion dur="6s" repeatCount="indefinite"
+              path="M 70 115 C 220 40, 340 190, 500 115 S 780 40, 930 115" />
+            <animate attributeName="opacity" values="0.35;0.05;0.35" dur="1.2s" repeatCount="indefinite" />
+          </circle>
+        </g>
+
+        <!-- Stage 1: Data Preparation — verified -->
+        <g class="node ok">
+          <circle class="glow" cx="70" cy="115" r="22" />
+          <circle class="ring" cx="70" cy="115" r="15" />
+          <text class="label" x="70" y="160" text-anchor="middle">DATA PREP</text>
+          <text class="sub" x="70" y="174" text-anchor="middle">verified</text>
+        </g>
+
+        <!-- Stage 2: SFT Training — not run -->
+        <g class="node idle">
+          <circle class="glow" cx="242" cy="72" r="22" />
+          <circle class="ring" cx="242" cy="72" r="15" />
+          <text class="label" x="242" y="52" text-anchor="middle">SFT TRAIN</text>
+          <text class="sub" x="242" y="97" text-anchor="middle">needs GPU</text>
+        </g>
+
+        <!-- Stage 3: Evaluation — partial -->
+        <g class="node partial">
+          <circle class="glow" cx="414" cy="158" r="22" />
+          <circle class="ring" cx="414" cy="158" r="15" />
+          <text class="label" x="414" y="200" text-anchor="middle">EVALUATION</text>
+          <text class="sub" x="414" y="184" text-anchor="middle">metrics tested</text>
+        </g>
+
+        <!-- Stage 4: Tracking — not run -->
+        <g class="node idle">
+          <circle class="glow" cx="586" cy="72" r="22" />
+          <circle class="ring" cx="586" cy="72" r="15" />
+          <text class="label" x="586" y="52" text-anchor="middle">TRACKING</text>
+          <text class="sub" x="586" y="97" text-anchor="middle">not run</text>
+        </g>
+
+        <!-- Stage 5: Inference Optimization — not run -->
+        <g class="node idle">
+          <circle class="glow" cx="758" cy="158" r="22" />
+          <circle class="ring" cx="758" cy="158" r="15" />
+          <text class="label" x="758" y="200" text-anchor="middle">MERGE / QUANTIZE</text>
+          <text class="sub" x="758" y="184" text-anchor="middle">not run</text>
+        </g>
+
+        <!-- Stage 6: Deployment — verified -->
+        <g class="node ok">
+          <circle class="glow" cx="930" cy="115" r="22" />
+          <circle class="ring" cx="930" cy="115" r="15" />
+          <text class="label" x="930" y="160" text-anchor="middle">DEPLOY</text>
+          <text class="sub" x="930" y="174" text-anchor="middle">verified</text>
+        </g>
+      </svg>
+
+      <div class="legend">
+        <span><i class="ok"></i> verified this session</span>
+        <span><i class="partial"></i> partially exercised</span>
+        <span><i class="idle"></i> not run (GPU / weights required)</span>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="stats-h">
+    <h2 id="stats-h">Validation Summary</h2>
+    <div class="stats">
+      <div class="stat">
+        <div class="value ok">11 / 11</div>
+        <div class="label">Unit tests passed</div>
+        <div class="note">config, data validation, evaluation metrics &amp; report — 134.32s</div>
+      </div>
+      <div class="stat">
+        <div class="value">8 / 2</div>
+        <div class="label">Data split (80/20)</div>
+        <div class="note">10-row sample validated by <code style="font-family:var(--font-mono)">prepare_data.py</code></div>
+      </div>
+      <div class="stat">
+        <div class="value ok">2 / 2</div>
+        <div class="label">API endpoints responded</div>
+        <div class="note"><code style="font-family:var(--font-mono)">/health</code> and <code style="font-family:var(--font-mono)">/generate</code>, both HTTP 200</div>
+      </div>
+      <div class="stat">
+        <div class="value accent">1</div>
+        <div class="label">Environment blocker resolved</div>
+        <div class="note">no working Python found → embeddable install fixed it</div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="log-h">
+    <h2 id="log-h">Command Log</h2>
+    <div class="console">
+      <pre><span class="block"><span class="cmd">$</span> pytest -v
+<span class="pass">tests/test_config.py::test_load_model_config PASSED</span>
+<span class="pass">tests/test_config.py::test_load_lora_config_qlora PASSED</span>
+<span class="pass">tests/test_config.py::test_load_training_config PASSED</span>
+<span class="pass">tests/test_config.py::test_load_deployment_config PASSED</span>
+<span class="pass">tests/test_data_validation.py::test_validate_sft_dataset_accepts_well_formed_rows PASSED</span>
+<span class="pass">tests/test_data_validation.py::test_validate_sft_dataset_rejects_missing_column PASSED</span>
+<span class="pass">tests/test_data_validation.py::test_validate_sft_dataset_rejects_empty_content PASSED</span>
+<span class="pass">tests/test_evaluation_metrics.py::test_exact_match_score PASSED</span>
+<span class="pass">tests/test_evaluation_metrics.py::test_rouge_scores_identical_text_is_near_one PASSED</span>
+<span class="pass">tests/test_evaluation_metrics.py::test_perplexity_matches_exp_of_loss PASSED</span>
+<span class="pass">tests/test_evaluation_report.py::test_compare_results_computes_deltas PASSED</span>
+<span class="sum">======================= 11 passed in 134.32s =======================</span></span>
+
+<span class="block"><span class="cmd">$</span> python scripts/prepare_data.py --input sample_sft.jsonl --output-dir data/processed --eval-ratio 0.2
+<span class="dim">train=8 eval=2 -> data\processed</span></span>
+
+<span class="block"><span class="cmd">$</span> curl http://127.0.0.1:8123/health
+<span class="dim">{"status":"ok","model_path":"sshleifer/tiny-gpt2"}</span>
+
+<span class="cmd">$</span> curl -X POST http://127.0.0.1:8123/generate -d '{"prompt":"Hello, this is a test of"}'
+<span class="dim">{"completion":" workshopsMost deflect DreamsMini predatorsshows bravery incarcer soy Singapore Wheelsozyg Dreams Boone Late"}</span></span></pre>
+    </div>
+  </section>
+
+  <section aria-labelledby="env-h">
+    <h2 id="env-h">Environment Note</h2>
+    <div class="callout">
+      <b>No system Python was available.</b> The prior install was a broken partial copy (DLLs only, no <code>python.exe</code>), and the official python.org MSI installer failed with <code>Error 1926</code> — the sandbox blocks ACL writes to <code>AppData\Roaming\Microsoft\Installer</code>. Worked around it with the <b>embeddable zip distribution</b> (no installer, no registry writes): extracted <code>python-3.12.7-embed-amd64.zip</code>, enabled <code>site</code> in <code>python312._pth</code>, bootstrapped <code>pip</code> via <code>get-pip.py</code>. Installed at <code>PyEmbed312\python.exe</code>.
+    </div>
+  </section>
+
+  <footer>
+    llmforge-production-finetuning · pipeline &amp; validation snapshot · 2026-07-07
+  </footer>
+
+</div>
