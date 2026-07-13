@@ -64,7 +64,7 @@ def build_trainer(
         packing=training_cfg.packing,
         seed=training_cfg.seed,
         report_to=training_cfg.report_to,
-        max_seq_length=model_cfg.max_seq_length,
+        max_length=model_cfg.max_seq_length,
         dataset_text_field="text",
     )
 

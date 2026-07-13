@@ -5,10 +5,12 @@ from __future__ import annotations
 import argparse
 from functools import partial
 
+from transformers import AutoTokenizer
+
 from llmforge.config import load_lora_config, load_model_config, load_training_config
 from llmforge.data.loader import load_sft_dataset
 from llmforge.data.preprocessing import format_example
-from llmforge.training.trainer import build_trainer, load_base_model_and_tokenizer
+from llmforge.training.trainer import build_trainer
 
 
 def main() -> None:
@@ -24,13 +26,15 @@ def main() -> None:
     lora_cfg = load_lora_config(args.lora_config)
     training_cfg = load_training_config(args.training_config)
 
-    _, tokenizer = load_base_model_and_tokenizer(model_cfg, lora_cfg)
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_cfg.name, trust_remote_code=model_cfg.trust_remote_code
+    )
 
     train_dataset = load_sft_dataset(args.train_file).map(
-        partial(format_example, tokenizer=tokenizer)
+        partial(format_example, tokenizer=tokenizer), remove_columns=["messages"]
     )
     eval_dataset = load_sft_dataset(args.eval_file).map(
-        partial(format_example, tokenizer=tokenizer)
+        partial(format_example, tokenizer=tokenizer), remove_columns=["messages"]
     )
 
     trainer = build_trainer(model_cfg, lora_cfg, training_cfg, train_dataset, eval_dataset)

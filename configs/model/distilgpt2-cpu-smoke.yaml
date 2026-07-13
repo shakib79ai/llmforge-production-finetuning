@@ -1,0 +1,4 @@
+name: distilgpt2
+trust_remote_code: false
+torch_dtype: float32
+max_seq_length: 128
